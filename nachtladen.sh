@@ -70,11 +70,38 @@ if [[ $nachtladen == "1" ]]; then
 		nachtladenstate=1
 		dayoftheweek=$(date +%w)
 		currenthour=$(date +%k)
-		if [[ $dayoftheweek -eq 0 && $currenthour -ge 14 ]] || [[ $dayoftheweek -ge 1 && $dayoftheweek -le 4 ]] || [[ $dayoftheweek -eq 5 && $currenthour -le 11 ]]  ; then
-		diesersoc=$nachtsoc
-		else
-			diesersoc=$nachtsoc1
-		fi
+
+                diesersoc=$nachtsoc   # sollte eigentlich ueberschrieben werden
+                #DF: depending on day of week set nachtsoc differently
+                #if [[ $dayoftheweek -eq 0 && $currenthour -ge 14 ]] || [[ $dayoftheweek -ge 1 && $dayoftheweek -le 4 ]] || [[ $dayoftheweek -eq 5 && $currenthour -le 11 ]]  ; then
+                #Sonntag abend
+                if [[ $dayoftheweek -eq 0 && $currenthour -ge 14 ]] || [[ $dayoftheweek -eq 1 && $currenthour -le 11 ]]  ; then
+                        diesersoc=$nachtsoc1
+                #Montag abend
+                elif [[ $dayoftheweek -eq 1 && $currenthour -ge 14 ]] || [[ $dayoftheweek -eq 2 && $currenthour -le 11 ]]  ; then
+                        diesersoc=$nachtsoc2
+                #Dienstag abend
+                elif [[ $dayoftheweek -eq 2 && $currenthour -ge 14 ]] || [[ $dayoftheweek -eq 3 && $currenthour -le 11 ]]  ; then
+                        diesersoc=$nachtsoc3
+                #Mittwoch abend
+                elif [[ $dayoftheweek -eq 3 && $currenthour -ge 14 ]] || [[ $dayoftheweek -eq 4 && $currenthour -le 11 ]]  ; then
+                        diesersoc=$nachtsoc4
+                #Donnerstag abend
+                elif [[ $dayoftheweek -eq 4 && $currenthour -ge 14 ]] || [[ $dayoftheweek -eq 5 && $currenthour -le 11 ]]  ; then
+                        diesersoc=$nachtsoc5
+                #Freitag abend
+                elif [[ $dayoftheweek -eq 5 && $currenthour -ge 14 ]] || [[ $dayoftheweek -eq 6 && $currenthour -le 11 ]]  ; then
+                        diesersoc=$nachtsoc6
+                #MSamstag abend
+                elif [[ $dayoftheweek -eq 6 && $currenthour -ge 14 ]] || [[ $dayoftheweek -eq 0 && $currenthour -le 11 ]]  ; then
+                        diesersoc=$nachtsoc7
+                else
+                        # hier sollten wir eigentlich nie hinkommen
+                        diesersoc=$nachtsoc
+                fi
+
+
+
 		if [[ $socmodul != "none" ]]; then
 			if [[ $debug == "1" ]]; then
                 		echo nachtladen mit socmodul $socmodul

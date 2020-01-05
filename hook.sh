@@ -151,7 +151,9 @@ if (( verbraucher1_aktiv == "1")); then
 		if ! [[ $verbraucher1_wh == $rekwh ]] ; then
 			echo $verbraucher1_wh > /var/www/html/openWB/ramdisk/verbraucher1_wh
 		fi
-
+                #DF
+                echo $(( -verbraucher1_watt +  pvwatt/3 )) >/var/www/html/openWB/ramdisk/haus1_watt
+		#DF ENDE
 	fi
 	if [[ $verbraucher1_typ == "mpm3pm" ]]; then
 		if [[ $verbraucher1_source == *"dev"* ]]; then
@@ -199,6 +201,9 @@ if (( verbraucher2_aktiv == "1")); then
 		if ! [[ $verbraucher2_wh == $rekwh ]] ; then
 			echo $verbraucher2_wh > /var/www/html/openWB/ramdisk/verbraucher2_wh
 		fi
+                #DF
+                echo $(( -verbraucher2_watt + pvwatt/3 )) >/var/www/html/openWB/ramdisk/haus2_watt
+		#DF ENDE
 	fi
 	if [[ $verbraucher2_typ == "mpm3pm" ]]; then
 		if [[ $verbraucher2_source == *"dev"* ]]; then
@@ -237,6 +242,58 @@ else
 
 fi
 
+if (( verbraucher3_aktiv == "1")); then
+        echo "1" > /var/www/html/openWB/ramdisk/verbraucher3vorhanden
+        if [[ $verbraucher3_typ == "http" ]]; then
+                verbraucher3_watt=$(curl --connect-timeout 3 -s $verbraucher3_urlw )
+                rekwh='^[-+]?[0-9]+\.?[0-9]*$'
+                if ! [[ $verbraucher3_watt == $rekwh ]] ; then
+                        echo $verbraucher3_watt > /var/www/html/openWB/ramdisk/verbraucher3_watt
+                fi
+                verbraucher3_wh=$(curl --connect-timeout 3 -s $verbraucher3_urlh &)
+                if ! [[ $verbraucher3_wh == $rekwh ]] ; then
+                        echo $verbraucher3_wh > /var/www/html/openWB/ramdisk/verbraucher3_wh
+                fi
+                #DF
+                echo $(( -verbraucher3_watt + pvwatt/3 )) >/var/www/html/openWB/ramdisk/haus3_watt
+		#DF ENDE
+        fi
+        if [[ $verbraucher3_typ == "mpm3pm" ]]; then
+                if [[ $verbraucher3_source == *"dev"* ]]; then
+                        sudo python modules/verbraucher/mpm3pmlocal.py 2 $verbraucher3_source $verbraucher3_id &
+                else
+                        sudo python modules/verbraucher/mpm3pmremote.py 2 $verbraucher3_source $verbraucher3_id &
+                fi
+        fi
+        if [[ $verbraucher3_typ == "sdm120" ]]; then
+                if [[ $verbraucher3_source == *"dev"* ]]; then
+                        sudo python modules/verbraucher/sdm120local.py 2 $verbraucher3_source $verbraucher3_id &
+                else
+                        sudo python modules/verbraucher/sdm120remote.py 2 $verbraucher3_source $verbraucher3_id &
+                fi
+        fi
+        if [[ $verbraucher3_typ == "tasmota" ]]; then
+                verbraucher3_out=$(curl --connect-timeout 3 -s $verbraucher3_ip/cm?cmnd=Status%208 )
+                rekwh='^[-+]?[0-9]+\.?[0-9]*$'
+                verbraucher3_watt=$(echo $verbraucher3_out | jq '.StatusSNS.ENERGY.Power')
+                if [ ! -z "$verbraucher3_watt" ]; then
+                        if ! [[ $verbraucher3_watt == $rekwh ]] ; then
+                                echo $verbraucher3_watt > /var/www/html/openWB/ramdisk/verbraucher3_watt
+                        fi
+                fi
+                verbraucher3_wh=$(echo $verbraucher3_out | jq '.StatusSNS.ENERGY.Total')
+                verbraucher3_totalwh=$(echo "scale=0;(($verbraucher3_wh * 1000) + $verbraucher3_tempwh)  / 1" | bc)
+                if [ ! -z "$verbraucher3_totalwh" ]; then
+                        if ! [[ $verbraucher3_totalwh == $rekwh ]] ; then
+                                echo $verbraucher3_totalwh > /var/www/html/openWB/ramdisk/verbraucher3_wh
+                        fi
+                fi
+                echo 0 > /var/www/html/openWB/ramdisk/verbraucher3_whe
+        fi
+else
+        verbraucher3_watt=0
+
+fi
 
 if (( angesteckthooklp1 == 1 )); then
 	plugstat=$(<ramdisk/plugstat)

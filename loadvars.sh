@@ -23,6 +23,12 @@ sofortlllp8=$(<ramdisk/lp8sofortll)
 #get oldvars for mqtt
 opvwatt=$(<ramdisk/mqttpvwatt)
 owattbezug=$(<ramdisk/mqttwattbezug)
+owattbezug1=$(<ramdisk/mqttwattbezug1)
+owattbezug2=$(<ramdisk/mqttwattbezug2)
+owattbezug3=$(<ramdisk/mqttwattbezug3)
+owatthaus1=$(<ramdisk/mqttwatthaus1)
+owatthaus2=$(<ramdisk/mqttwatthaus2)
+owatthaus3=$(<ramdisk/mqttwatthaus3)
 ollaktuell=$(<ramdisk/mqttladeleistunglp1)
 ohausverbrauch=$(<ramdisk/mqtthausverbrauch)
 ollkombiniert=$(<ramdisk/llkombiniert)
@@ -59,7 +65,6 @@ lp5enabled=$(<ramdisk/lp5enabled)
 lp6enabled=$(<ramdisk/lp6enabled)
 lp7enabled=$(<ramdisk/lp7enabled)
 lp8enabled=$(<ramdisk/lp8enabled)
-version=$(<web/version)
 # EVSE DIN Plug State
 if [[ $evsecon == "modbusevse" ]]; then
 	evseplugstate=$(sudo python runs/readmodbus.py $modbusevsesource $modbusevseid 1002 1)
@@ -111,18 +116,16 @@ if [[ $lastmanagement == "1" ]]; then
 	if [[ $evsecons1 == "modbusevse" ]]; then
 		evseplugstatelp2=$(sudo python runs/readmodbus.py $evsesources1 $evseids1 1002 1)
 		ladestatuss1=$(</var/www/html/openWB/ramdisk/ladestatuss1)
-		if [[ $evseplugstatelp2 > "0" ]] && [[ $evseplugstatelp2 < "7" ]] ; then
-			if [[ $evseplugstatelp2 > "1" ]]; then
-				echo 1 > /var/www/html/openWB/ramdisk/plugstats1
-			else
-				echo 0 > /var/www/html/openWB/ramdisk/plugstats1
-			fi
-			if [[ $evseplugstatelp2 > "2" ]] && [[ $ladestatuss1 == "1" ]] ; then
-				echo 1 > /var/www/html/openWB/ramdisk/chargestats1
-			else
-				echo 0 > /var/www/html/openWB/ramdisk/chargestats1
-			fi
 
+		if [[ $evseplugstatelp2 > "1" ]]; then
+			echo 1 > /var/www/html/openWB/ramdisk/plugstats1
+		else
+			echo 0 > /var/www/html/openWB/ramdisk/plugstats1
+		fi
+		if [[ $evseplugstatelp2 > "2" ]] && [[ $ladestatuss1 == "1" ]] ; then
+			echo 1 > /var/www/html/openWB/ramdisk/chargestats1
+		else
+			echo 0 > /var/www/html/openWB/ramdisk/chargestats1
 		fi
 	fi
 	if [[ $evsecons1 == "slaveeth" ]]; then
@@ -357,12 +360,10 @@ if [[ $lastmanagement == "1" ]]; then
 		if ! [[ $soc1 =~ $re ]] ; then
 		 soc1="0"
 		fi
-		soc1vorhanden=1
 		echo 1 > /var/www/html/openWB/ramdisk/soc1vorhanden
 	else
 		echo 0 > /var/www/html/openWB/ramdisk/soc1vorhanden
 		soc1=0
-		soc1vorhanden=0
 	fi
 	timeout 10 modules/$ladeleistungs1modul/main.sh || true
 	llkwhs1=$(</var/www/html/openWB/ramdisk/llkwhs1)
@@ -385,7 +386,6 @@ if [[ $lastmanagement == "1" ]]; then
 else
 	echo "$ladeleistung" > /var/www/html/openWB/ramdisk/llkombiniert
 	ladeleistunglp2=0
-	soc1vorhanden=0
 fi
 #dritter ladepunkt
 if [[ $lastmanagements2 == "1" ]]; then
@@ -576,6 +576,12 @@ if [[ $wattbezugmodul != "none" ]]; then
 	if ! [[ $evua3 =~ $re ]] ; then
 		evua3="0"
 	fi
+	wattbezug1=$(cat /var/www/html/openWB/ramdisk/verbraucher1_watt)
+	wattbezug2=$(cat /var/www/html/openWB/ramdisk/verbraucher2_watt)
+	wattbezug3=$(cat /var/www/html/openWB/ramdisk/verbraucher3_watt)
+	watthaus1=$(cat /var/www/html/openWB/ramdisk/haus1_watt)
+	watthaus2=$(cat /var/www/html/openWB/ramdisk/haus2_watt)
+	watthaus3=$(cat /var/www/html/openWB/ramdisk/haus3_watt)
 	evuas=($evua1 $evua2 $evua3)
 	maxevu=${evuas[0]}
 	for v in "${evuas[@]}"; do
@@ -598,8 +604,6 @@ fi
 
 #Soc ermitteln
 if [[ $socmodul != "none" ]]; then
-	socvorhanden=1
-	echo 1 > /var/www/html/openWB/ramdisk/socvorhanden
 	if (( stopsocnotpluggedlp1 == 1 )); then
 		if (( plugstat == 1 )); then
 			timeout 10 modules/$socmodul/main.sh || true
@@ -619,8 +623,6 @@ if [[ $socmodul != "none" ]]; then
 		fi
 	fi
 else
-	socvorhanden=0
-	echo 0 > /var/www/html/openWB/ramdisk/socvorhanden
 	soc=0
 fi
 hausverbrauch=$((wattbezugint - pvwatt - ladeleistung - speicherleistung))
@@ -654,6 +656,30 @@ fi
 if [[ "$owattbezug" != "$wattbezug" ]]; then
 	tempPubList="${tempPubList}\nopenWB/evu/W=${wattbezug}"
 	echo $wattbezug > ramdisk/mqttwattbezug
+fi
+if [[ "$owattbezug1" != "$wattbezug1" ]]; then
+	tempPubList="${tempPubList}\nopenWB/evu1/W=${wattbezug1}"
+	echo $wattbezug1 > ramdisk/mqttwattbezug1
+fi
+if [[ "$owattbezug2" != "$wattbezug2" ]]; then
+	tempPubList="${tempPubList}\nopenWB/evu2/W=${wattbezug2}"
+	echo $wattbezug2 > ramdisk/mqttwattbezug2
+fi
+if [[ "$owattbezug3" != "$wattbezug3" ]]; then
+	tempPubList="${tempPubList}\nopenWB/evu3/W=${wattbezug3}"
+	echo $wattbezug3 > ramdisk/mqttwattbezug3
+fi
+if [[ "$owatthaus1" != "$watthaus1" ]]; then
+	tempPubList="${tempPubList}\nopenWB/haus1/W=${watthaus1}"
+	echo $watthaus1 > ramdisk/mqttwatthaus1
+fi
+if [[ "$owatthaus2" != "$watthaus2" ]]; then
+	tempPubList="${tempPubList}\nopenWB/haus2/W=${watthaus2}"
+	echo $watthaus2 > ramdisk/mqttwatthaus2
+fi
+if [[ "$owatthaus3" != "$watthaus3" ]]; then
+	tempPubList="${tempPubList}\nopenWB/haus3/W=${watthaus3}"
+	echo $watthaus3 > ramdisk/mqttwatthaus3
 fi
 if [[ "$ollaktuell" != "$ladeleistunglp1" ]]; then
 	tempPubList="${tempPubList}\nopenWB/lp/1/W=${ladeleistunglp1}"
@@ -764,11 +790,6 @@ if (( ohook3aktiv != hook3aktiv )); then
 	tempPubList="${tempPubList}\nopenWB/boolHook3Active=${hook3aktiv}"
 	echo $hook3aktiv > ramdisk/mqtthook3aktiv
 fi
-oversion=$(<ramdisk/mqttversion)
-if [[ $oversion != $version ]]; then
-	tempPubList="${tempPubList}\nopenWB/system/Version=${version}"
-	echo -n "$version" > ramdisk/mqttversion
-fi
 ominimalstromstaerke=$(<ramdisk/mqttminimalstromstaerke)
 if (( ominimalstromstaerke != minimalstromstaerke )); then
 	tempPubList="${tempPubList}\nopenWB/AMinimalAmpsConfigured=${minimalstromstaerke}"
@@ -825,17 +846,6 @@ if [[ "$olastmanagement" != "$lastmanagement" ]]; then
 	tempPubList="${tempPubList}\nopenWB/lp/2/boolChargePointConfigured=${lastmanagement}"
 	echo $lastmanagement > ramdisk/mqttlastmanagement
 fi
-osoc1vorhanden=$(<ramdisk/mqttsoc1vorhanden)
-if [[ "$osoc1vorhanden" != "$soc1vorhanden" ]]; then
-	tempPubList="${tempPubList}\nopenWB/lp/2/boolSocConfigured=${soc1vorhanden}"
-	echo $soc1vorhanden > ramdisk/mqttsoc1vorhanden
-fi
-osocvorhanden=$(<ramdisk/mqttsocvorhanden)
-if [[ "$osocvorhanden" != "$socvorhanden" ]]; then
-	tempPubList="${tempPubList}\nopenWB/lp/1/boolSocConfigured=${socvorhanden}"
-	echo $socvorhanden > ramdisk/mqttsocvorhanden
-fi
-
 olastmanagements2=$(<ramdisk/mqttlastmanagements2)
 if [[ "$olastmanagements2" != "$lastmanagements2" ]]; then
 	tempPubList="${tempPubList}\nopenWB/lp/3/boolChargePointConfigured=${lastmanagements2}"
