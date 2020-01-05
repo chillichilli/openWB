@@ -32,7 +32,8 @@
 # sets charging current on point "s1" to 9A
 
 . /var/www/html/openWB/openwb.conf
-lp1enabled=$(<ramdisk/lp1enabled)
+lp1enabled=1
+#$(<ramdisk/lp1enabled)
 lp2enabled=$(<ramdisk/lp2enabled)
 lp3enabled=$(<ramdisk/lp3enabled)
 lp4enabled=$(<ramdisk/lp4enabled)
@@ -119,10 +120,13 @@ function setChargingCurrentWifi () {
 			state=$(echo $output | jq '.list[] | .evseState')
 			if ((state == false)) ; then
 				curl --silent --connect-timeout $evsewifitimeoutlp1 -s http://$evsewifiiplp1/setStatus?active=true > /dev/null
+				echo "curl --silent --connect-timeout $evsewifitimeoutlp1 -s http://$evsewifiiplp1/setStatus?active=true "
 			fi
 			oldcurrent=$(echo $output | jq '.list[] | .actualCurrent')
 			if (( oldcurrent != $current )) ; then
 				curl --silent --connect-timeout $evsewifitimeoutlp1 -s http://$evsewifiiplp1/setCurrent?current=$current > /dev/null
+				echo "curl --silent --connect-timeout $evsewifitimeoutlp1 -s http://$evsewifiiplp1/setCurrent?current=$current"
+				#http://192.168.178.24/setCurrent?current=8
 			fi
 		fi
 	fi
@@ -216,6 +220,7 @@ function setChargingCurrent () {
 	fi
 
 	if [[ $evsecon == "simpleevsewifi" ]]; then
+		echo "DF: simpleevsewifi"
 		setChargingCurrentWifi $current $evsewifitimeoutlp1 $evsewifiiplp1
 	fi
 	if [[ $evsecon == "goe" ]]; then
