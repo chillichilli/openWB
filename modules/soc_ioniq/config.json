@@ -1,0 +1,10 @@
+{
+    "akey": "akey",
+    "token": "token",
+    "dongle": {
+	    "type": "ELM327",
+	    "port": "/dev/rfcomm2",
+	    "speed": 9600
+    },
+    "cartype": "IONIQ_BEV"
+}
